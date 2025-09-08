@@ -1,25 +1,22 @@
 ﻿# See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
-# المرحلة الأساسية لتشغيل التطبيق
-FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
+# المرحلة الأولى - البناء
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
 EXPOSE 80
 
-# مرحلة البناء
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
-WORKDIR /src
-COPY ["CardAPI/CardAPI.csproj", "CardAPI/"]
-RUN dotnet restore "CardAPI/CardAPI.csproj"
-COPY . .
-WORKDIR "/src/CardAPI"
-RUN dotnet build "CardAPI.csproj" -c Release -o /app/build
+# نسخ ملف المشروع واستعادة الحزم
+COPY ["CardAPI/CardAPI.csproj", "./"]
+RUN dotnet restore "CardAPI.csproj"
 
-# مرحلة النشر
-FROM build AS publish
-RUN dotnet publish "CardAPI.csproj" -c Release -o /app/publish
+# نسخ باقي ملفات المشروع وبناؤه
+COPY CardAPI/. ./
+RUN dotnet publish "CardAPI.csproj" -c Release -o /out
 
-# المرحلة النهائية لتشغيل التطبيق
-FROM base AS final
+# المرحلة الثانية - التشغيل
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=build /out .
+
+EXPOSE 80
 ENTRYPOINT ["dotnet", "CardAPI.dll"]
