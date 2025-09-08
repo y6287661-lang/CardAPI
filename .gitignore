@@ -1,0 +1,9 @@
+.vs/
+*.user
+*.suo
+*.DS_Store
+*.vsdx
+bin/
+obj/
+*.txt
+render.yaml~
